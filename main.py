@@ -34,6 +34,11 @@ students.write(0, 4, '多少天没上课')
 notice.write(0, 0, 'Notice')
 notice.write(0, 1, 'Students')
 notice.write(1, 0, '三周没上课')
+notice.write(2, 0, '科普论文start')
+notice.write(3, 0, '科普论文due')
+notice.write(4, 0, '开题due')
+notice.write(5, 0, '答辩due')
+notice.write(6, 0, '论文due')
 
 # Authorize with Google
 scope = ['https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file",
@@ -51,6 +56,11 @@ fetch_from_trello.convert_data(board_list, active_student_list)
 # Run Commands and Update to Google Sheet
 count = 0
 absent_list = []
+KEPU_start_list = []
+KEPU_due_list = []
+KAITI_due_list = []
+DABIAN_due_list = []
+essay_due_list = []
 
 for board in board_list:
     # Identify whether to track this board
@@ -77,13 +87,45 @@ for board in board_list:
     current_session = commands.get_current_class(data['cards'], Doing_id, Done_id)
     students.write(count, 3, current_session)
     absence_time = commands.get_absence_time(data['cards'], current_session)
-    students.write(count, 3, absence_time)
+    students.write(count, 4, absence_time)
+
+    # 三周不上课提醒
     if absence_time != 'NA' and int(absence_time) > 21:
         absent_list.append(board_name)
+    # 科普论文开题提醒
+    if current_session == 2:
+        KEPU_start_list.append(board_name)
+    # 科普论文due提醒
+    if current_session == 4:
+        KEPU_due_list.append(board_name)
+    # 开题due提醒
+    if current_session == 6:
+        KAITI_due_list.append(board_name)
+    # 答辩due提醒
+    if current_session == 12:
+        DABIAN_due_list.append(board_name)
+    # 论文due提醒
+    if current_session == 12 and absence_time > 28:
+        essay_due_list.append(board_name)
 
 print(absent_list)
+print(KEPU_start_list)
+print(KEPU_due_list)
+print(KAITI_due_list)
+print(DABIAN_due_list)
+print(essay_due_list)
 for i in range(0, len(absent_list)):
     notice.write(1, i + 1, absent_list[i])
+for i in range(0, len(KEPU_start_list)):
+    notice.write(2, i + 1, KEPU_start_list[i])
+for i in range(0, len(KEPU_due_list)):
+    notice.write(3, i + 1, KEPU_due_list[i])
+for i in range(0, len(KAITI_due_list)):
+    notice.write(4, i + 1, KAITI_due_list[i])
+for i in range(0, len(DABIAN_due_list)):
+    notice.write(5, i + 1, DABIAN_due_list[i])
+# for i in range(0, len(essay_due_list)):
+    # notice.write(6, i + 1, essay_due_list[i])
 
 # Close local sheet and push to Google
 student_workbook.close()
