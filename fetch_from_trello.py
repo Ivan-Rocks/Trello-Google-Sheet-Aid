@@ -1,7 +1,7 @@
 from requests_oauthlib import OAuth1Session
-from pprint import pp, pprint
 import json
 
+import commands
 from commands import get_remaining_sessions
 
 
@@ -20,11 +20,12 @@ def get_boards(data):
 
 
 # Fetch board information from Trello and convert to JSON
-def convert_data(data, active_student_list):
+def convert_data(data, inactive_student_list):
     count = 0
+    tot = len(data) - len(inactive_student_list)
     for i in data:
         board_name = i['name']
-        if board_name not in active_student_list:
+        if board_name in inactive_student_list:
             continue
         api_key = 'add7e1644b237dd2dae95b7b2f39c3b4'
         api_secret = '89fb5caca76cc0c24bdd7e66222b33aaaf1fad668cb6f890c397ad302bb905f1'
@@ -35,7 +36,8 @@ def convert_data(data, active_student_list):
         content = r.json()
         write_to_json(board_name, content)
         count += 1
-        print("List Converted " + str(count) + "/" + str(len(active_student_list)))
+        print("List Converted " + str(count) + "/" + str(tot))
+
     print('Conversion Completed')
 
 

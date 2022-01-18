@@ -1,8 +1,6 @@
 # From External Libraries
 from time import sleep
 
-import pandas as pd
-import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 import json
@@ -20,8 +18,8 @@ notice_workbook = xlsxwriter.Workbook('Results/Notice.xlsx')
 notice = notice_workbook.add_worksheet()
 
 # Extract local student list
-active_file = open("Active Student List.txt", "r", encoding='utf-8', errors='ignore')
-active_student_list = active_file.read().splitlines()
+inactive_file = open("Inactive Student List.txt", "r", encoding='utf-8', errors='ignore')
+inactive_student_list = inactive_file.read().splitlines()
 
 # 绘制Student Info表头
 students.write(0, 0, 'Name')
@@ -29,6 +27,7 @@ students.write(0, 1, '总课时')
 students.write(0, 2, '剩余课时')
 students.write(0, 3, 'Current Class')
 students.write(0, 4, '多少天没上课')
+students.write(0, 5, '课程时间')
 
 # 绘制Notice表头
 notice.write(0, 0, 'Notice')
@@ -39,6 +38,7 @@ notice.write(3, 0, '科普论文due')
 notice.write(4, 0, '开题due')
 notice.write(5, 0, '答辩due')
 notice.write(6, 0, '论文due')
+notice.write(7, 0, '提醒Due')
 
 # Authorize with Google
 scope = ['https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file",
@@ -51,7 +51,7 @@ sheet = client.open("Demo Sheet").worksheet("Test")
 with open('Auth Info/Trello Auth.json') as json_file:
     auth_data = json.load(json_file)
 board_list = fetch_from_trello.get_boards(auth_data)  # get list of boards
-fetch_from_trello.convert_data(board_list, active_student_list)
+fetch_from_trello.convert_data(board_list, inactive_student_list)
 
 # Run Commands and Update to Google Sheet
 count = 0
@@ -61,11 +61,13 @@ KEPU_due_list = []
 KAITI_due_list = []
 DABIAN_due_list = []
 essay_due_list = []
+feedback_due_list = []
+
 
 for board in board_list:
     # Identify whether to track this board
     board_name = board['name']
-    if board_name not in active_student_list:
+    if board_name in inactive_student_list:
         continue
 
     count += 1  # Set Counter
@@ -88,6 +90,13 @@ for board in board_list:
     students.write(count, 3, current_session)
     absence_time = commands.get_absence_time(data['cards'], current_session)
     students.write(count, 4, absence_time)
+    class_time_list = commands.get_class_time(data['cards'], total_sessions)
+    print(board_name)
+    print(class_time_list)
+    session_cnt = 0
+    for session_time in class_time_list:
+        students.write(count, 5 + session_cnt, session_time)
+        session_cnt += 1
 
     # 三周不上课提醒
     if absence_time != 'NA' and int(absence_time) > 21:
@@ -107,13 +116,11 @@ for board in board_list:
     # 论文due提醒
     if current_session == 12 and absence_time > 28:
         essay_due_list.append(board_name)
+    # Feedback提醒
+    if current_session % 3 == 0:
+        feedback_due_list.append(board_name)
 
-print(absent_list)
-print(KEPU_start_list)
-print(KEPU_due_list)
-print(KAITI_due_list)
-print(DABIAN_due_list)
-print(essay_due_list)
+# Write Notices
 for i in range(0, len(absent_list)):
     notice.write(1, i + 1, absent_list[i])
 for i in range(0, len(KEPU_start_list)):
@@ -124,8 +131,10 @@ for i in range(0, len(KAITI_due_list)):
     notice.write(4, i + 1, KAITI_due_list[i])
 for i in range(0, len(DABIAN_due_list)):
     notice.write(5, i + 1, DABIAN_due_list[i])
-# for i in range(0, len(essay_due_list)):
-    # notice.write(6, i + 1, essay_due_list[i])
+for i in range(0, len(essay_due_list)):
+    notice.write(6, i + 1, essay_due_list[i])
+for i in range(0, len(feedback_due_list)):
+    notice.write(7, i + 1, feedback_due_list[i])
 
 # Close local sheet and push to Google
 student_workbook.close()

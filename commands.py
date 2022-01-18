@@ -26,17 +26,19 @@ def get_current_class(cards, doing, done):
     return max_index
 
 
-def get_time(cards):
-    l = ['', '', '', '', '', '', '', '', '', '', '', '']
-    for i in cards:
-        if i['name'].find('Session') != -1:
-            index = get_index(i)
-            r = ''
-            if i['start'] is None:
-                r = 'NA'
-            else:
-                r = str(i['start'])
-            l[index - 1] = r
+def get_class_time(cards, total_sessions):
+    l = []
+    cnt = 1
+    for index in range(1, total_sessions + 1):
+        for i in cards:
+            if get_index(i) == index:
+                start = 0
+                if i is not None and i['start'] is not None:
+                    year = (i['start'][0:4])
+                    month = (i['start'][5:7])
+                    day = (i['start'][8:10])
+                    start = year + ' ' + month + ' ' + day
+                l.append(start)
     return l
 
 
@@ -46,7 +48,7 @@ def get_absence_time(cards, session):
         if get_index(i) == session:
             cur_card = i
     if cur_card is None or cur_card['start'] is None:
-        return 'NA'
+        return 0
     year = int(cur_card['start'][0:4])
     month = int(cur_card['start'][5:7])
     day = int(cur_card['start'][8:10])
@@ -76,6 +78,14 @@ def get_Done_id(lists):
     list_id = ''
     for i in lists:
         if i['name'] == 'Done':
+            list_id = i['id']
+    return list_id
+
+
+def get_Feedback_id(lists):
+    list_id = ''
+    for i in lists:
+        if i['name'] == 'Feedback':
             list_id = i['id']
     return list_id
 
