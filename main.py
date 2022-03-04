@@ -38,7 +38,8 @@ notice.write(3, 0, '科普论文due')
 notice.write(4, 0, '开题due')
 notice.write(5, 0, '答辩due')
 notice.write(6, 0, '论文due')
-notice.write(7, 0, '提醒Due')
+notice.write(7, 0, 'Feedback Due')
+notice.write(8, 0, 'Board格式错误')
 
 # Authorize with Google
 scope = ['https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file",
@@ -62,6 +63,7 @@ KAITI_due_list = []
 DABIAN_due_list = []
 essay_due_list = []
 feedback_due_list = []
+format_error_list = []
 
 
 for board in board_list:
@@ -119,6 +121,13 @@ for board in board_list:
     # Feedback提醒
     if current_session % 3 == 0:
         feedback_due_list.append(board_name)
+    # 格式错误提醒
+    format_error_flag = 0
+    for i in data['cards']:
+        if commands.get_index(i) == -2:
+            format_error_flag = 1
+    if format_error_flag:
+        format_error_list.append(board_name)
 
 # Write Notices
 for i in range(0, len(absent_list)):
@@ -135,6 +144,8 @@ for i in range(0, len(essay_due_list)):
     notice.write(6, i + 1, essay_due_list[i])
 for i in range(0, len(feedback_due_list)):
     notice.write(7, i + 1, feedback_due_list[i])
+for i in range(0, len(format_error_list)):
+    notice.write(8, i+1, format_error_list[i])
 
 # Close local sheet and push to Google
 student_workbook.close()

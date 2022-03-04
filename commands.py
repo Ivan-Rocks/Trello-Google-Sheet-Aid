@@ -94,6 +94,8 @@ def get_index(i):
     if i['name'].find('Session') == -1:
         return -1
     length = len(i['name'])
-    s = i['name'][7:length]
+    s = i['name'][8:length]
+    if s.isdigit() is False:
+        return -2
     index = int(s)
     return index
